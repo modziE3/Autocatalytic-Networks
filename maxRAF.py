@@ -120,6 +120,40 @@ def strictly_autocatalytic_RAF(R: set[Reaction], F: set[str]) -> set[Reaction]:
         if Rk == Rk_plus_one: break
         Rk = Rk.intersection(Rk_plus_one)
     return Rk
+
+def R_Q_poly(R: set[Reaction], F: set[str]) -> set[Reaction]:
+    Rk = R
+    changed = True
+    while changed:
+        changed = False
+        discard_set = set()
+        for reaction in Rk:
+            Rk_changed = {r for r in Rk if r != reaction}
+            if phi(Rk_changed, F) != set():
+                changed = True
+                discard_set.add(reaction)
+        Rk = {r for r in Rk if r not in discard_set}
+        if len(Rk) == 0:
+            break
+    return Rk
+
+def R_Q_exp(R: set[Reaction], F: set[str]) -> set[Reaction]:
+    return set.intersection(*all_rafs(R, F))
+
+def all_rafs(R: set[Reaction], F: set[str]) -> set[set[Reaction]]:
+
+    def all_sub_rafs(R: set[Reaction], F: set[str]) -> set[set[Reaction]]:
+        rafs = {frozenset(phi(R, F))}
+        for reaction in R:
+            R_changed = frozenset({r for r in R if r != reaction})
+            rafs.update(all_sub_rafs(frozenset(phi(R_changed, F)), F))
+        try:
+            rafs.remove(frozenset())
+        except KeyError:
+            pass
+        return rafs
+
+    return [set(raf) for raf in all_sub_rafs(R, F)]
         
 reaction_str_set = {
     'r1: a + a [{c,d},e] -> c',
@@ -181,6 +215,43 @@ example_9 = {
     }
 }
 
+example_custom_0 = {
+    "food_set": {'0','1','00','01','10','11'},
+    "reaction_set": {
+        reaction_str_to_class(r_str) for r_str in {
+            'r1: 10 + 0 [{01100}] -> 100',
+            'r2: 01 + 100 [{0}] -> 01100',
+            'r3: 10 + 1 [{0}] -> 101',
+            'r4: 11 + 10 [{101}] -> 1110',
+            'r5: 1110 + 0 [{101}] -> 11100',
+        }
+    }
+}
+
+example_custom_1 = {
+    "food_set": {'f'},
+    "reaction_set": {
+        reaction_str_to_class(r_str) for r_str in {
+            'r1: f [{c2}] -> c1',
+            'r2: f [{c1}, {c3}] -> c2',
+            'r3: f [{c2}] -> c3',
+        }
+    }
+}
+
+example_custom_2 = {
+    "food_set": {'f'},
+    "reaction_set": {
+        reaction_str_to_class(r_str) for r_str in {
+            'r1: f [{c3}] -> c1',
+            'r2: f [{c1}, {c3}] -> c2',
+            'r3: f [{c2}, {c4}] -> c3',
+            'r4: f [{c2}, {c3}] -> c4',
+        }
+    }
+}
+
+
 
 def print_maxRAF(example):
     reactions = example["reaction_set"]
@@ -188,13 +259,25 @@ def print_maxRAF(example):
     print(f"maxRAF(R) = {phi(reactions, food_set)}\n")
 
 if __name__ == "__main__":
-    print_maxRAF(example_0)
-    print_maxRAF(example_1)
-    print_maxRAF(example_9)
+    # print_maxRAF(example_0)
+    # print_maxRAF(example_1)
+    # print_maxRAF(example_9)
 
     # reactions = {reaction_str_to_class(r_str) for r_str in reaction_str_set}
     # food_set = {'a', 'b'}
     # print(f"maxRAF(R) = {phi(reactions, food_set)}\n")
+    # for raf in all_rafs(reactions, food_set):
+    #     print(raf)
+
+    example = example_custom_2
+
+    print("All RAFs:")
+    for raf in all_rafs(example["reaction_set"], example["food_set"]):
+        print(raf)
+
+    print("\nPersistent reactions:")
+    print(R_Q_exp(example["reaction_set"], example["food_set"]))
+
 
     # reactions = {reaction_str_to_class(r_str) for r_str in reaction_str_set2}
     # food_set = {'a', 'b', 'c'}
