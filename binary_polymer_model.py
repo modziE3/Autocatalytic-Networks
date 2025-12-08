@@ -2,7 +2,7 @@ from maxRAF import *
 import random
 
 
-def generate_reactions(n, p, t=2, l=2):
+def generate_reactions(n, p, l=2):
     elements = set(['0','1','2','3','4','5','6','7','8','9'][:l])
     new_elements = set()
     reactions = set()
@@ -34,5 +34,16 @@ def contains_reaction(reaction_set, reaction):
 
 
 if __name__ == "__main__":
-    for r in generate_reactions(8,0.001):
-        print(r)
+    food_set = {'0','1','00','01','10','11'}
+    p = 0.001
+    for i in range(9)[2:]:
+        count = 50
+        amt = 0
+        for _ in range(count):
+            if phi(generate_reactions(i, p), food_set) != set():
+                amt += 1
+        print(f"n={i} gave RAF probability of {amt/count}")
+
+
+    # for r in generate_reactions(5, 0.001):
+    #     print(r)
