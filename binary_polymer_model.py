@@ -2,7 +2,7 @@ from maxRAF import *
 import random
 
 
-def generate_reactions(n, p, l=2):
+def generate_reactions(n, p, t=2, l=2):
     elements = set(['0','1','2','3','4','5','6','7','8','9'][:l])
     new_elements = set()
     reactions = set()
@@ -23,8 +23,7 @@ def generate_reactions(n, p, l=2):
         for element in elements:
             if random.random() <= p:
                 reaction.catalyst_sets.append({element})
-    return reactions
-                    
+    return reactions, {element for element in elements if len(element) <= t}
 
 def contains_reaction(reaction_set, reaction):
     for r in reaction_set:
@@ -34,16 +33,18 @@ def contains_reaction(reaction_set, reaction):
 
 
 if __name__ == "__main__":
-    food_set = {'0','1','00','01','10','11'}
-    p = 0.001
-    for i in range(9)[2:]:
-        count = 50
+    p = 0.0015
+    t = 2
+    l = 2
+    for i in range(8)[2:]:
+        count = 100
         amt = 0
-        for _ in range(count):
-            if phi(generate_reactions(i, p), food_set) != set():
+        for j in range(count):
+            print(f"Processing n={i}: {j/count * 100 :.0f}% complete", end='\r')
+            if phi(*generate_reactions(i, p, t, l)) != set():
                 amt += 1
-        print(f"n={i} gave RAF probability of {amt/count}")
+        print(f"n={i} gave RAF probability of {amt/count:.2f}")
 
 
-    # for r in generate_reactions(5, 0.001):
-    #     print(r)
+    for r in generate_reactions(5, 0.001)[0]:
+        print(r)
