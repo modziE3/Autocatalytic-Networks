@@ -57,7 +57,7 @@ def contains_reaction(reaction_set, reaction):
 def number_of_reactions(n, l=2):
     return 2*sum((l**k) * (k-1) for k in range(n+1)[1:])
 
-def plot_varied_mean_catalysts(n, mc_span, sample_size, t=2, l=2):
+def get_probability_span_from_mc_range(n, mc_span, sample_size, t=2, l=2):
     probablity_span = []
 
     generator = BinaryCRSGenerator()
@@ -67,26 +67,42 @@ def plot_varied_mean_catalysts(n, mc_span, sample_size, t=2, l=2):
         mc = mc_span[i]
         max_raf_count = 0
         for j in range(sample_size):
-            print(f"Processing mc index={i} out of {len(mc_span)}: {j/sample * 100 :.0f}% complete", end='\r')
+            print(f"n = {n}: Processing mc index={i} out of {len(mc_span)}: {j/sample * 100 :.0f}% complete", end='\r')
             generator.catalyze_reactions_level_of_catalysis(mc)
             if phi(generator.CRS.reactions, generator.CRS.food_set) != set(): max_raf_count += 1
         probablity_span.append(max_raf_count / sample_size)
+    return probablity_span
 
-    plt.plot(mc_span, probablity_span)
+def plot_varied_mean_catalysts(n, mc_span, sample_size, t=2, l=2):
+    plt.plot(mc_span, get_probability_span_from_mc_range(n, mc_span, sample_size, t, l))
     plt.grid(True)
-    # plt.show()
-
     plt.savefig(f"(n={n})(sample_size={sample_size})(number_of_points={len(mc_span)}).png")
+    # plt.show() #optional show graph
 
+def plot_n_range_varied_mean_catalysts(n_range, mc_span, sample_size, t=2, l=2):
+    for n in n_range:
+        plt.plot(mc_span, get_probability_span_from_mc_range(n, mc_span, sample_size, t, l), label = f"n = {n}")
+    plt.grid(True)
+    plt.legend()
+    plt.xlabel("Level of Catalysis")
+    plt.ylabel("Probability of a RAF")
+    plt.savefig(f"(n_range={n_range})(sample_size={sample_size})(number_of_points={len(mc_span)}).png")
+    # plt.show() #optional show graph
 
 if __name__ == "__main__":
-    mc_start = 1
-    mc_end = 3
+    mc_start = 0
+    mc_end = 3.5
     number_of_points = 50
     span = np.linspace(mc_start, mc_end, number_of_points)
 
-    n = 4
+    # n = 8
+    # l = 2
+    # t = 2
+    # sample = 1
+    # plot_varied_mean_catalysts(n, span, sample, t, l)
+
+    n_range = [4, 5, 6, 7, 8]
     l = 2
     t = 2
-    sample = 2000
-    plot_varied_mean_catalysts(n, span, sample, t, l)
+    sample = 500
+    plot_n_range_varied_mean_catalysts(n_range, span, sample, t, l)
