@@ -35,6 +35,12 @@ class Reaction:
            f"[{', '.join('{' + ', '.join(s) + '}' for s in self.catalyst_sets)}] " \
            f"-> {' + '.join(self.products)}"
     
+    def non_complex_str(self, empty_catalyst_placeholder: bool = False):
+        catalysts = [{"NOT_CATALYSED"}] if empty_catalyst_placeholder and self.catalyst_sets == [] else self.catalyst_sets
+        return f"{self.label}: {'+'.join(self.reactants)} " \
+           f"[{', '.join(','.join(s) for s in catalysts)}] " \
+           f"-> {'+'.join(self.products)}"
+    
     def __repr__(self):
         return self.label
     
@@ -122,6 +128,7 @@ def strictly_autocatalytic_RAF(R: set[Reaction], F: set[str]) -> set[Reaction]:
     return Rk
 
 def R_Q_poly(R: set[Reaction], F: set[str]) -> set[Reaction]:
+    if phi(R,F)==set(): return set()
     Rk = R
     changed = True
     while changed:
@@ -137,8 +144,17 @@ def R_Q_poly(R: set[Reaction], F: set[str]) -> set[Reaction]:
             break
     return Rk
 
+def R_Q_poly2(R: set[Reaction], F: set[str]) -> set[Reaction]:
+    if phi(R,F)==set(): return set()
+    return {r for r in R if set() == phi(F=F, R={
+        r_prime for r_prime in R if r != r_prime
+    })}
+
 def R_Q_exp(R: set[Reaction], F: set[str]) -> set[Reaction]:
-    return set.intersection(*all_rafs(R, F))
+    try:
+        return set.intersection(*all_rafs(R, F))
+    except:
+        return set()
 
 def all_rafs(R: set[Reaction], F: set[str]) -> set[set[Reaction]]:
 
@@ -252,6 +268,31 @@ example_custom_2 = {
 }
 
 
+example_custom_3 = {
+    "food_set": {'f1', 'f2'},
+    "reaction_set": {
+        reaction_str_to_class(r_str) for r_str in {
+            'r11: f1+f2 [{UA},{UC},{UG},{UU}] -> AA',
+            'r12: f1+f2 [{GA},{GC},{GG},{GU}] -> AC',
+            'r13: f1+f2 [{CA},{CC},{CG},{CU}] -> AG',
+            'r14: f1+f2 [{AA},{AC},{AG},{AU}] -> AU',
+            'r21: f1+f2 [{UA},{UC},{UG},{UU}] -> CA',
+            'r22: f1+f2 [{GA},{GC},{GG},{GU}] -> CC',
+            'r23: f1+f2 [{CA},{CC},{CG},{CU}] -> CG',
+            'r24: f1+f2 [{AA},{AC},{AG},{AU}] -> CU',
+            'r31: f1+f2 [{UA},{UC},{UG},{UU}] -> GA',
+            'r32: f1+f2 [{GA},{GC},{GG},{GU}] -> GC',
+            'r33: f1+f2 [{CA},{CC},{CG},{CU}] -> GG',
+            'r34: f1+f2 [{AA},{AC},{AG},{AU}] -> GU',
+            'r41: f1+f2 [{UA},{UC},{UG},{UU}] -> UA',
+            'r42: f1+f2 [{GA},{GC},{GG},{GU}] -> UC',
+            'r43: f1+f2 [{CA},{CC},{CG},{CU}] -> UG',
+            'r44: f1+f2 [{AA},{AC},{AG},{AU}] -> UU',
+        }
+    }
+}
+
+
 
 def print_maxRAF(example):
     reactions = example["reaction_set"]
@@ -276,7 +317,10 @@ if __name__ == "__main__":
         print(raf)
 
     print("\nPersistent reactions:")
-    print(R_Q_exp(example["reaction_set"], example["food_set"]))
+    temp = R_Q_exp(example["reaction_set"], example["food_set"])
+    print(f"exp: {temp}")
+    temp = R_Q_poly2(example["reaction_set"], example["food_set"])
+    print(f"poly2: {temp}")
 
 
     # reactions = {reaction_str_to_class(r_str) for r_str in reaction_str_set2}
