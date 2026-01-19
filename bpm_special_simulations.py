@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from typing import NamedTuple
 from binary_polymer_model import BinaryCRSGenerator, number_of_reactions, plot_n_range_varied_mean_catalysts
 from special_functions import CAF_existence
+from digraphs import crs_digraph_has_directed_cycle
 
 def get_RAF_size_span_from_mc_range(n, mc_span, sample_size, t=2, l=2):
     RAF_size_span = []
@@ -36,6 +37,23 @@ def get_CAF_probability_from_mc_range(n, mc_span, sample_size, t=2, l=2):
             generator.catalyze_reactions_level_of_catalysis(mc)
             if CAF_existence(generator.CRS): caf_count += 1
         RAF_size_span.append(caf_count / sample_size)
+    return mc_span, RAF_size_span
+
+def get_digraph_cycle_probability_from_mc_range(n, mc_span, sample_size, t=2, l=2):
+    RAF_size_span = []
+
+    generator = BinaryCRSGenerator()
+    generator.generate_reactions(n, t, l)
+
+    for i in range(len(mc_span)):
+        mc = mc_span[i]
+        cycle_count = 0
+        for j in range(sample_size):
+            print(f"n = {n}: Processing mc index={i} out of {len(mc_span)}: {j/sample_size * 100 :.0f}% complete", end='\r')
+            generator.catalyze_reactions_level_of_catalysis(mc, False)
+            if crs_digraph_has_directed_cycle(generator.CRS): cycle_count += 1
+            # if phi(generator.CRS.reactions, generator.CRS.food_set) != set(): cycle_count += 1
+        RAF_size_span.append(cycle_count / sample_size)
     return mc_span, RAF_size_span
 
 def plot_n_range_special(n_range, func, args: list, name, x_label, y_label, save_to_file = False):
@@ -93,18 +111,34 @@ if __name__ == "__main__":
     # sample_size = 500
     # plot_n_range_varied_mean_catalysts(n_range, span, sample_size, allow_food_catalyst=False)
 
+    # mc_start = 0
+    # mc_end = 4.5
+    # number_of_points = 50
+    # span = np.linspace(mc_start, mc_end, number_of_points)
+    # n_range = [4,5,6,7]
+    # sample_size = 500
+    # plot_n_range_special(
+    #     n_range,
+    #     get_CAF_probability_from_mc_range,
+    #     [span, sample_size],
+    #     f"(caf_probalility)(n_range={n_range})(sample={sample_size})(number_of_points={number_of_points})",
+    #     "Level of Catalysis",
+    #     "Probability of CAF",
+    #     save_to_file=True
+    # )
+
     mc_start = 0
-    mc_end = 4.5
+    mc_end = 3.5
     number_of_points = 50
     span = np.linspace(mc_start, mc_end, number_of_points)
-    n_range = [4,5,6,7]
-    sample_size = 500
+    n_range = [4,5]
+    sample_size = 100
     plot_n_range_special(
         n_range,
-        get_CAF_probability_from_mc_range,
+        get_digraph_cycle_probability_from_mc_range,
         [span, sample_size],
-        f"(caf_probalility)(n_range={n_range})(sample={sample_size})(number_of_points={number_of_points})",
+        f"(digraph_cycle_probalility)(n_range={n_range})(sample={sample_size})(number_of_points={number_of_points})",
         "Level of Catalysis",
-        "Probability of CAF",
+        "Probability of Cycle in Digraph",
         save_to_file=True
     )
